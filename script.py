@@ -1,0 +1,153 @@
+# from appium import webdriver
+# from appium.options.android import UiAutomator2Options
+# from appium.webdriver.common.appiumby import AppiumBy
+
+# # 步驟 1: 使用 UiAutomator2Options 配置 Capabilities
+# # 這會自動處理 W3C 協議要求的 'appium:' 前綴
+# options = UiAutomator2Options()
+# options.platform_name = "Android"
+# options.automation_name = "UiAutomator2"  # 對應伺服器端安裝的驅動程式
+# options.device_name = "Pixel 7a"
+# options.platform_version = "15"
+# options.app_package = "com.google.android.settings" # 範例：開啟設定
+# options.app_activity = ".Settings"
+# options.no_reset = True  # 測試後不清除 App 資料
+
+# # 針對 Android 15 的額外建議：增加命令超時時間，避免因系統優化導致的連線中斷
+# options.new_command_timeout = 300 
+
+# # 步驟 2: 建立驅動程式實例
+# # 確保 Appium Server 正在運行，且 JDK 版本正確
+# appium_server_url = 'http://127.0.0.1:4723'
+
+# try:
+#     print("正在連接 Appium Server...")
+#     driver = webdriver.Remote(appium_server_url, options=options)
+#     print("Session 建立成功！")
+
+#     # 步驟 3: 執行簡單操作 (W3C 標準寫法)
+#     # 在 Android 15 設定頁面尋找元素
+#     el = driver.find_element(by=AppiumBy.XPATH, value='//*')
+#     el.click()
+    
+#     input("測試完成，按 Enter 結束...")
+
+# except Exception as e:
+#     print(f"發生錯誤: {e}")
+# finally:
+#     if 'driver' in locals():
+#         driver.quit()
+
+# import unittest
+# from appium import webdriver
+# from appium.options.android import UiAutomator2Options
+# from appium.webdriver.common.appiumby import AppiumBy
+
+# class ModernAppiumTest(unittest.TestCase):
+#     def setUp(self) -> None:
+#         # 1. 使用 UiAutomator2Options 替代 DesiredCapabilities
+#         options = UiAutomator2Options()
+#         options.platform_name = "Android"
+#         options.automation_name = "UiAutomator2"
+#         options.device_name = "Pixel 7a"
+#         options.app_package = "com.android.settings"  # 測試內建設定 App
+#         options.app_activity = ".Settings"
+        
+#         # 2. 連線到 Appium 2.x Server
+#         # 注意：不再使用 /wd/hub，除非 Server 啟動參數有特別指定
+#         appium_server_url = 'http://localhost:4723'
+        
+#         print(f"Connecting to Appium at {appium_server_url} with options: {options.to_capabilities()}")
+        
+#         try:
+#             self.driver = webdriver.Remote(appium_server_url, options=options)
+#         except Exception as e:
+#             print(f"致命錯誤：無法建立 Session。請檢查 Java 21 環境與 Server Log。錯誤詳情：{e}")
+#             raise e
+
+#     def test_battery_setting_search(self) -> None:
+#         # 3. 使用 AppiumBy 進行元素定位
+#         try:
+#             # 尋找 "Battery" 選項 (視語系可能需要調整文字)
+#             el = self.driver.find_element(by=AppiumBy.XPATH, value='//*')
+#             print(f"成功找到元素：{el.text}")
+#             el.click()
+#         except Exception as e:
+#             print(f"元素查找失敗：{e}")
+
+#     def tearDown(self) -> None:
+#         if hasattr(self, 'driver') and self.driver:
+#             self.driver.quit()
+
+# if __name__ == '__main__':
+#     unittest.main()
+
+import unittest
+from appium import webdriver
+from appium.options.android import UiAutomator2Options
+
+class Android15SettingsTest(unittest.TestCase):
+    def setUp(self) -> None:
+        """
+        初始化 Appium Driver。
+        這裡展示了針對 Android 15 的正確 Option 配置。
+        """
+        # 1. 實例化 UiAutomator2Options
+        # 這是 Appium 2.0+ 與 Python Client 4.0+ 的標準做法，取代了舊的 DesiredCapabilities 字典。
+        options = UiAutomator2Options()
+
+        # 2. 基礎平台設定
+        options.platform_name = "Android"
+        options.automation_name = "UiAutomator2"
+        options.platform_version = "15"  # 指定版本有助於 Appium 優化驅動行為
+
+        # 3. 設備識別 (回應您的疑問)
+        # device_name 在 Android 中主要是裝飾性的，但必須填寫。
+        # 填寫 "Pixel 8" 或 "Android Emulator" 皆可，不會影響連線 (除非是 iOS)。
+        options.device_name = "Pixel_Android_15"
+        
+        # 強烈建議：如果您有多台設備，請取消下行註解並填入 adb devices 看到的序號
+        # options.udid = "YOUR_DEVICE_SERIAL_NUMBER"
+
+        # 4. 應用程式指定 (修正 Error Type 3 的關鍵)
+        # 錯誤原因：原本使用了 Google 的內部套件名稱 (com.google.android.settings)
+        # 修正：使用 AOSP 標準名稱，這在 Pixel 與大多數 Android 手機上皆通用。
+        options.app_package = "com.google.android.apps.nexuslauncher"
+        options.app_activity = ".Settings" 
+        # 注意：.Settings 前面的點代表它位於 app_package 的路徑下
+
+        # 5. 其他優化設定
+        options.no_reset = True  # 測試後不清除 App 資料，加快下次啟動速度
+        options.new_command_timeout = 300 # 避免因為測試邏輯執行太久而斷線
+
+        # 6. 建立連線
+        # Appium Server URL 通常為 http://localhost:4723
+        print("正在嘗試連接 Appium Server 並啟動 Android 15 Session...")
+        try:
+            self.driver = webdriver.Remote("http://localhost:4723", options=options)
+            print("Session 啟動成功！")
+        except Exception as e:
+            print(f"Session 啟動失敗。請檢查 Appium Server Log。\n錯誤詳情: {e}")
+            raise e
+
+    def test_verify_settings_launch(self):
+        """
+        驗證 Settings App 是否成功啟動並位於前台
+        """
+        # 獲取當前運行的 Package 與 Activity
+        current_package = self.driver.current_package
+        current_activity = self.driver.current_activity
+        
+        print(f"當前 Package: {current_package}")
+        print(f"當前 Activity: {current_activity}")
+
+        # 斷言驗證
+        self.assertEqual(current_package, "com.google.android.apps.nexuslauncher", "Package 名稱不符")
+        # 注意：有些手機啟動後會自動跳轉到 Sub-activity，所以這裡只驗證 Package 較為保險
+
+    def tearDown(self) -> None:
+        if hasattr(self, 'driver') and self.driver:
+            self.driver.quit()
+
+if __name__ == '__main__':
+    unittest.main()
