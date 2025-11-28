@@ -82,72 +82,153 @@
 # if __name__ == '__main__':
 #     unittest.main()
 
+# import unittest
+# from appium import webdriver
+# from appium.options.android import UiAutomator2Options
+
+# class Android15SettingsTest(unittest.TestCase):
+#     def setUp(self) -> None:
+#         """
+#         初始化 Appium Driver。
+#         這裡展示了針對 Android 15 的正確 Option 配置。
+#         """
+#         # 1. 實例化 UiAutomator2Options
+#         # 這是 Appium 2.0+ 與 Python Client 4.0+ 的標準做法，取代了舊的 DesiredCapabilities 字典。
+#         options = UiAutomator2Options()
+
+#         # 2. 基礎平台設定
+#         options.platform_name = "Android"
+#         options.automation_name = "UiAutomator2"
+#         options.platform_version = "15"  # 指定版本有助於 Appium 優化驅動行為
+
+#         # 3. 設備識別 (回應您的疑問)
+#         # device_name 在 Android 中主要是裝飾性的，但必須填寫。
+#         # 填寫 "Pixel 8" 或 "Android Emulator" 皆可，不會影響連線 (除非是 iOS)。
+#         options.device_name = "Pixel_Android_15"
+        
+#         # 強烈建議：如果您有多台設備，請取消下行註解並填入 adb devices 看到的序號
+#         # options.udid = "YOUR_DEVICE_SERIAL_NUMBER"
+
+#         # 4. 應用程式指定 (修正 Error Type 3 的關鍵)
+#         # 錯誤原因：原本使用了 Google 的內部套件名稱 (com.google.android.settings)
+#         # 修正：使用 AOSP 標準名稱，這在 Pixel 與大多數 Android 手機上皆通用。
+#         options.app_package = "com.google.android.apps.nexuslauncher"
+#         options.app_activity = ".Settings" 
+#         # 注意：.Settings 前面的點代表它位於 app_package 的路徑下
+
+#         # 5. 其他優化設定
+#         options.no_reset = True  # 測試後不清除 App 資料，加快下次啟動速度
+#         options.new_command_timeout = 300 # 避免因為測試邏輯執行太久而斷線
+
+#         # 6. 建立連線
+#         # Appium Server URL 通常為 http://localhost:4723
+#         print("正在嘗試連接 Appium Server 並啟動 Android 15 Session...")
+#         try:
+#             self.driver = webdriver.Remote("http://localhost:4723", options=options)
+#             print("Session 啟動成功！")
+#         except Exception as e:
+#             print(f"Session 啟動失敗。請檢查 Appium Server Log。\n錯誤詳情: {e}")
+#             raise e
+
+#     def test_verify_settings_launch(self):
+#         """
+#         驗證 Settings App 是否成功啟動並位於前台
+#         """
+#         # 獲取當前運行的 Package 與 Activity
+#         current_package = self.driver.current_package
+#         current_activity = self.driver.current_activity
+        
+#         print(f"當前 Package: {current_package}")
+#         print(f"當前 Activity: {current_activity}")
+
+#         # 斷言驗證
+#         self.assertEqual(current_package, "com.google.android.apps.nexuslauncher", "Package 名稱不符")
+#         # 注意：有些手機啟動後會自動跳轉到 Sub-activity，所以這裡只驗證 Package 較為保險
+
+#     def tearDown(self) -> None:
+#         if hasattr(self, 'driver') and self.driver:
+#             self.driver.quit()
+
+# if __name__ == '__main__':
+#     unittest.main()
+
+
+import time
 import unittest
 from appium import webdriver
 from appium.options.android import UiAutomator2Options
+from appium.webdriver.common.appiumby import AppiumBy
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
-class Android15SettingsTest(unittest.TestCase):
+class Android15CalculatorTest(unittest.TestCase):
     def setUp(self) -> None:
-        """
-        初始化 Appium Driver。
-        這裡展示了針對 Android 15 的正確 Option 配置。
-        """
-        # 1. 實例化 UiAutomator2Options
-        # 這是 Appium 2.0+ 與 Python Client 4.0+ 的標準做法，取代了舊的 DesiredCapabilities 字典。
+        # 使用 Appium Python Client 4.0 的標準 Option 配置
         options = UiAutomator2Options()
-
-        # 2. 基礎平台設定
-        options.platform_name = "Android"
-        options.automation_name = "UiAutomator2"
-        options.platform_version = "15"  # 指定版本有助於 Appium 優化驅動行為
-
-        # 3. 設備識別 (回應您的疑問)
-        # device_name 在 Android 中主要是裝飾性的，但必須填寫。
-        # 填寫 "Pixel 8" 或 "Android Emulator" 皆可，不會影響連線 (除非是 iOS)。
-        options.device_name = "Pixel_Android_15"
+        options.platform_name = 'Android'
+        options.automation_name = 'UiAutomator2'
+        options.device_name = 'Pixel_7a'
+        options.platform_version = '15'
         
-        # 強烈建議：如果您有多台設備，請取消下行註解並填入 adb devices 看到的序號
-        # options.udid = "YOUR_DEVICE_SERIAL_NUMBER"
-
-        # 4. 應用程式指定 (修正 Error Type 3 的關鍵)
-        # 錯誤原因：原本使用了 Google 的內部套件名稱 (com.google.android.settings)
-        # 修正：使用 AOSP 標準名稱，這在 Pixel 與大多數 Android 手機上皆通用。
-        options.app_package = "com.google.android.apps.nexuslauncher"
-        options.app_activity = ".Settings" 
-        # 注意：.Settings 前面的點代表它位於 app_package 的路徑下
-
-        # 5. 其他優化設定
-        options.no_reset = True  # 測試後不清除 App 資料，加快下次啟動速度
-        options.new_command_timeout = 300 # 避免因為測試邏輯執行太久而斷線
-
-        # 6. 建立連線
-        # Appium Server URL 通常為 http://localhost:4723
-        print("正在嘗試連接 Appium Server 並啟動 Android 15 Session...")
-        try:
-            self.driver = webdriver.Remote("http://localhost:4723", options=options)
-            print("Session 啟動成功！")
-        except Exception as e:
-            print(f"Session 啟動失敗。請檢查 Appium Server Log。\n錯誤詳情: {e}")
-            raise e
-
-    def test_verify_settings_launch(self):
-        """
-        驗證 Settings App 是否成功啟動並位於前台
-        """
-        # 獲取當前運行的 Package 與 Activity
-        current_package = self.driver.current_package
-        current_activity = self.driver.current_activity
+        # 明確指定要啟動的應用包名與 Activity
+        # 這是確保 Appium 能找到並啟動計算機的關鍵 [8]
+        options.app_package = 'com.google.android.calculator'
+        options.app_activity = 'com.android.calculator2.Calculator'
         
-        print(f"當前 Package: {current_package}")
-        print(f"當前 Activity: {current_activity}")
-
-        # 斷言驗證
-        self.assertEqual(current_package, "com.google.android.apps.nexuslauncher", "Package 名稱不符")
-        # 注意：有些手機啟動後會自動跳轉到 Sub-activity，所以這裡只驗證 Package 較為保險
+        # 設置 no_reset 為 False，強制重啟應用，讓用戶看到「啟動」的過程
+        options.no_reset = False 
+        
+        # 連接至 Appium Server
+        appium_server_url = 'http://127.0.0.1:4723'
+        print("正在啟動 Android 15 計算機應用程式...")
+        self.driver = webdriver.Remote(appium_server_url, options=options)
 
     def tearDown(self) -> None:
-        if hasattr(self, 'driver') and self.driver:
+        if self.driver:
             self.driver.quit()
+
+    def test_addition_visualization(self) -> None:
+        driver = self.driver
+        # 設定顯式等待，這是處理 Android 15 動畫延遲的最佳實踐 
+        wait = WebDriverWait(driver, 10)
+
+        print("步驟 1: 應用程式已啟動，正在等待 UI 加載...")
+        
+        # 定位計算機按鈕
+        # 使用 Resource ID 是最穩定的方式。在 Google 計算機中，ID 通常如下：
+        # digit_2 對應數字 2，op_add 對應加號
+        el_digit_2 = wait.until(EC.element_to_be_clickable((AppiumBy.ID, "com.google.android.calculator:id/digit_2")))
+        el_plus = driver.find_element(AppiumBy.ID, "com.google.android.calculator:id/op_add")
+        el_digit_5 = driver.find_element(AppiumBy.ID, "com.google.android.calculator:id/digit_5")
+        el_equals = driver.find_element(AppiumBy.ID, "com.google.android.calculator:id/eq")
+
+        # 執行動作並加入人為延遲，以便肉眼觀察
+        print("步驟 2: 點擊 '2'")
+        el_digit_2.click()
+        time.sleep(1) # 暫停 1 秒，讓用戶看到數字出現
+
+        print("步驟 3: 點擊 '+'")
+        el_plus.click()
+        time.sleep(1)
+
+        print("步驟 4: 點擊 '5'")
+        el_digit_5.click()
+        time.sleep(1)
+
+        print("步驟 5: 點擊 '='")
+        el_equals.click()
+        
+        # 驗證結果
+        result_field = wait.until(EC.presence_of_element_located(
+            (AppiumBy.ID, "com.google.android.calculator:id/result_final")))
+        
+        result_text = result_field.text
+        print(f"計算結果: {result_text}")
+        
+        # 斷言驗證
+        assert result_text == "7", f"預期結果為 7，但實際獲得 {result_text}"
+        print("測試通過: 成功在設備上驗證 2 + 5 = 7。")
+        time.sleep(2) # 最後暫停，展示最終畫面
 
 if __name__ == '__main__':
     unittest.main()
