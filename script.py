@@ -168,67 +168,73 @@ class Android15CalculatorTest(unittest.TestCase):
         options.platform_name = 'Android'
         options.automation_name = 'UiAutomator2'
         options.device_name = 'Pixel_7a'
-        options.platform_version = '15'
+        options.platform_version = '16'
         
         # 明確指定要啟動的應用包名與 Activity
-        # 這是確保 Appium 能找到並啟動計算機的關鍵 [8]
-        options.app_package = 'com.google.android.calculator'
-        options.app_activity = 'com.android.calculator2.Calculator'
+        # 測試 Settings 應用程式 (這個應該是預裝的)
+        options.app_package = 'com.android.settings'
+        options.app_activity = 'Settings'
         
-        # 設置 no_reset 為 False，強制重啟應用，讓用戶看到「啟動」的過程
-        options.no_reset = False 
+        # 設置 no_reset 為 True，因為計算機是預裝應用程式
+        options.no_reset = True 
         
         # 連接至 Appium Server
         appium_server_url = 'http://127.0.0.1:4723'
-        print("正在啟動 Android 15 計算機應用程式...")
+        print("正在啟動 Android 16 Settings 應用程式...")
         self.driver = webdriver.Remote(appium_server_url, options=options)
 
     def tearDown(self) -> None:
         if self.driver:
             self.driver.quit()
 
-    def test_addition_visualization(self) -> None:
+    def test_calculator_demo(self) -> None:
         driver = self.driver
-        # 設定顯式等待，這是處理 Android 15 動畫延遲的最佳實踐 
+        # 設定顯式等待
         wait = WebDriverWait(driver, 10)
 
-        print("步驟 1: 應用程式已啟動，正在等待 UI 加載...")
+        print("步驟 1: 驗證計算機應用程式已啟動...")
         
-        # 定位計算機按鈕
-        # 使用 Resource ID 是最穩定的方式。在 Google 計算機中，ID 通常如下：
-        # digit_2 對應數字 2，op_add 對應加號
-        el_digit_2 = wait.until(EC.element_to_be_clickable((AppiumBy.ID, "com.google.android.calculator:id/digit_2")))
-        el_plus = driver.find_element(AppiumBy.ID, "com.google.android.calculator:id/op_add")
-        el_digit_5 = driver.find_element(AppiumBy.ID, "com.google.android.calculator:id/digit_5")
-        el_equals = driver.find_element(AppiumBy.ID, "com.google.android.calculator:id/eq")
-
-        # 執行動作並加入人為延遲，以便肉眼觀察
-        print("步驟 2: 點擊 '2'")
-        el_digit_2.click()
-        time.sleep(1) # 暫停 1 秒，讓用戶看到數字出現
-
-        print("步驟 3: 點擊 '+'")
-        el_plus.click()
+        # 驗證當前應用程式
+        current_package = driver.current_package
+        current_activity = driver.current_activity
+        
+        print(f"當前 Package: {current_package}")
+        print(f"當前 Activity: {current_activity}")
+        
+        # 確保是計算機應用程式
+        self.assertEqual(current_package, "com.google.android.calculator")
+        
+        print("步驟 2: 執行簡單的計算 (2 + 3 = 5)...")
+        
+        # 點擊數字 2
+        digit_2 = wait.until(EC.element_to_be_clickable((AppiumBy.ID, "com.google.android.calculator:id/digit_2")))
+        digit_2.click()
+        time.sleep(0.5)
+        
+        # 點擊 +
+        plus = driver.find_element(AppiumBy.ID, "com.google.android.calculator:id/op_add")
+        plus.click()
+        time.sleep(0.5)
+        
+        # 點擊數字 3
+        digit_3 = driver.find_element(AppiumBy.ID, "com.google.android.calculator:id/digit_3")
+        digit_3.click()
+        time.sleep(0.5)
+        
+        # 點擊 =
+        equals = driver.find_element(AppiumBy.ID, "com.google.android.calculator:id/eq")
+        equals.click()
         time.sleep(1)
-
-        print("步驟 4: 點擊 '5'")
-        el_digit_5.click()
-        time.sleep(1)
-
-        print("步驟 5: 點擊 '='")
-        el_equals.click()
         
-        # 驗證結果
-        result_field = wait.until(EC.presence_of_element_located(
-            (AppiumBy.ID, "com.google.android.calculator:id/result_final")))
-        
-        result_text = result_field.text
+        # 檢查結果
+        result = wait.until(EC.presence_of_element_located((AppiumBy.ID, "com.google.android.calculator:id/result_final")))
+        result_text = result.text
         print(f"計算結果: {result_text}")
         
-        # 斷言驗證
-        assert result_text == "7", f"預期結果為 7，但實際獲得 {result_text}"
-        print("測試通過: 成功在設備上驗證 2 + 5 = 7。")
-        time.sleep(2) # 最後暫停，展示最終畫面
+        # 驗證結果
+        self.assertEqual(result_text, "5", f"預期結果為 5，但得到 {result_text}")
+        
+        print("測試通過: 成功在模擬器上執行 2 + 3 = 5 的計算")
 
 if __name__ == '__main__':
     unittest.main()
