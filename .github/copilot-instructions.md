@@ -29,7 +29,7 @@ from appium.options.android import UiAutomator2Options
 options = UiAutomator2Options()
 options.platform_name = 'Android'
 options.automation_name = 'UiAutomator2'
-options.device_name = 'Pixel_7a'  # Decorative, any string works
+options.device_name = 'emulator-5554'  # Use actual emulator name from 'adb devices'
 options.platform_version = '16'
 options.app_package = 'com.google.android.calculator'  # Calculator app (works on Android 16)
 options.app_activity = 'com.android.calculator2.Calculator'
@@ -189,6 +189,47 @@ def test_calculator_functionality(self):
     # Verify result
     result = self.driver.find_element(AppiumBy.ID, "com.google.android.calculator:id/result_final")
     self.assertEqual(result.text, "5")
+```
+
+### WiFi Toggle Testing Example
+```python
+def test_wifi_toggle(self):
+    # Verify Settings app is running
+    self.assertEqual(self.driver.current_package, "com.android.settings")
+    
+    # Find and click WiFi settings
+    wifi_option = self.driver.find_element(AppiumBy.XPATH, "//*[@text='Wi-Fi']")
+    wifi_option.click()
+    
+    # Find WiFi switch and toggle it
+    wifi_switch = self.driver.find_element(AppiumBy.CLASS_NAME, "android.widget.Switch")
+    initial_state = wifi_switch.get_attribute("checked")
+    wifi_switch.click()
+    
+    # Verify state changed
+    final_state = wifi_switch.get_attribute("checked")
+    self.assertNotEqual(initial_state, final_state)
+```
+
+### System Control via ADB Commands
+```python
+def test_wifi_toggle_adb(self):
+    import subprocess
+    
+    # Check initial WiFi state
+    result = subprocess.run(['adb', 'shell', 'settings', 'get', 'global', 'wifi_on'], 
+                          capture_output=True, text=True)
+    initial_state = result.stdout.strip()
+    
+    # Toggle WiFi
+    new_state = "0" if initial_state == "1" else "1"
+    subprocess.run(['adb', 'shell', 'settings', 'put', 'global', 'wifi_on', new_state])
+    
+    # Verify state changed
+    result = subprocess.run(['adb', 'shell', 'settings', 'get', 'global', 'wifi_on'], 
+                          capture_output=True, text=True)
+    final_state = result.stdout.strip()
+    self.assertNotEqual(initial_state, final_state)
 ```
 
 ## Code Organization Patterns
