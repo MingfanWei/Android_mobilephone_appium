@@ -349,7 +349,129 @@ class Android15CalculatorTest(unittest.TestCase):
             print(f"ADB 關閉飛航模式失敗: {e}")
             print("⚠️ 飛航模式可能未正確關閉")
 
-        print("步驟 5: 回到主畫面 (開機畫面)...")
+        print("步驟 5: 通過 UI 開啟 WiFi...")
+
+        # 首先嘗試通過 UI 進入網路設定
+        try:
+            # 尋找網路設定項目
+            network_locators = [
+                (AppiumBy.XPATH, "//*[@text='Network & internet']"),
+                (AppiumBy.XPATH, "//*[contains(@text, 'Network')]"),
+                (AppiumBy.XPATH, "//*[@text='Network & Internet']"),
+                (AppiumBy.XPATH, "//*[contains(@text, 'Network & Internet')]")
+            ]
+
+            network_found = False
+            for locator_type, locator_value in network_locators:
+                try:
+                    network_element = wait.until(EC.element_to_be_clickable((locator_type, locator_value)))
+                    network_element.click()
+                    print("已點擊 Network & internet 項目")
+                    network_found = True
+                    time.sleep(5)
+                    break
+                except:
+                    continue
+
+            if not network_found:
+                print("❌ 無法找到 Network & internet 項目")
+                return
+
+            # 在 Network & internet 頁面尋找 Internet 子項目
+            print("尋找 Internet 子項目...")
+            internet_locators = [
+                (AppiumBy.XPATH, "//*[@text='Internet']"),
+                (AppiumBy.XPATH, "//*[contains(@text, 'Internet')]"),
+                (AppiumBy.XPATH, "//*[@text='Wi-Fi']"),
+                (AppiumBy.XPATH, "//*[contains(@text, 'Wi-Fi')]")
+            ]
+
+            internet_found = False
+            for locator_type, locator_value in internet_locators:
+                try:
+                    internet_elements = driver.find_elements(locator_type, locator_value)
+                    for element in internet_elements:
+                        # 檢查是否是正確的 Internet/Wi-Fi 項目
+                        try:
+                            element.click()
+                            print("已點擊 Internet 子項目")
+                            internet_found = True
+                            time.sleep(2)
+                            break
+                        except:
+                            continue
+                    if internet_found:
+                        break
+                except:
+                    continue
+
+            if not internet_found:
+                print("❌ 無法找到 Internet 子項目")
+                # 返回設定主頁面
+                driver.back()
+                time.sleep(1)
+                return
+
+            # 在 Internet 頁面尋找並開啟 WiFi 開關
+            print("尋找 WiFi 開關...")
+            wifi_switch_found = False
+            wifi_switch_locators = [
+                (AppiumBy.CLASS_NAME, "android.widget.Switch"),
+                (AppiumBy.ID, "com.android.settings:id/switch_widget")
+            ]
+
+            for locator_type, locator_value in wifi_switch_locators:
+                try:
+                    switches = driver.find_elements(locator_type, locator_value)
+                    if switches:
+                        wifi_switch = switches[0]  # 通常第一個就是 WiFi
+                        wifi_state = wifi_switch.get_attribute("checked")
+                        print(f"當前 WiFi 狀態: {'開啟' if wifi_state == 'true' else '關閉'}")
+
+                        if wifi_state != "true":
+                            wifi_switch.click()
+                            print("已點擊 WiFi 開關 (開啟)")
+                            time.sleep(2)
+
+                            # 檢查最終狀態
+                            final_state = wifi_switch.get_attribute("checked")
+                            print(f"最終 WiFi 狀態: {'開啟' if final_state == 'true' else '關閉'}")
+
+                            if final_state == "true":
+                                print("✅ 成功通過 UI 開啟 WiFi")
+                                wifi_switch_found = True
+                            else:
+                                print("⚠️ WiFi 開關點擊後狀態未改變")
+                        else:
+                            print("✅ WiFi 已經開啟")
+                            wifi_switch_found = True
+                        break
+                except Exception as e:
+                    print(f"操作 WiFi 開關失敗: {e}")
+                    continue
+
+            if not wifi_switch_found:
+                print("❌ 無法找到或操作 WiFi 開關")
+
+            # 返回設定主頁面 (需要返回兩次：從Internet頁面回到Network頁面，再回到Settings主頁面)
+            driver.back()
+            time.sleep(1)
+            driver.back()
+            time.sleep(1)
+
+        except Exception as e:
+            print(f"UI 操作 WiFi 失敗: {e}")
+            print("嘗試使用 ADB 命令作為備用方案...")
+            try:
+                subprocess.run(['adb', 'shell', 'settings', 'put', 'global', 'wifi_on', '1'], 
+                             capture_output=True, timeout=10)
+                subprocess.run(['adb', 'shell', 'am', 'broadcast', '-a', 'android.intent.action.WIFI_MODE_CHANGED'], 
+                             capture_output=True, timeout=10)
+                print("✅ 已通過 ADB 備用方案開啟 WiFi")
+            except Exception as backup_e:
+                print(f"ADB 備用方案也失敗: {backup_e}")
+
+        print("步驟 6: 回到主畫面 (開機畫面)...")
 
         # 返回主畫面
         try:
@@ -364,7 +486,7 @@ class Android15CalculatorTest(unittest.TestCase):
                 driver.back()
                 time.sleep(0.5)
 
-        print("測試通過: 飛航模式開關演示完成")
+        print("測試通過: 飛航模式開關與 WiFi 開啟演示完成")
 
 if __name__ == '__main__':
     # 運行指定的測試方法
